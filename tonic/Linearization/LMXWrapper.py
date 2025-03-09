@@ -88,6 +88,7 @@ class LMXWrapper:
 
     def to_musicxml(self) -> str:
         dl = Delinearizer()
+        print(self.to_str())
         dl.process_text(self.to_str())
         score_etree = part_to_score(dl.part_element)
         output_xml = str(
@@ -108,6 +109,9 @@ class LMXWrapper:
         self.tokens = LMXWrapper._mxl_to_tokens(mxl)
 
     def to_human_readable(self, indent: int = 4) -> str:
+        if len(self.tokens) == 0:
+            return "No tokens found."
+
         # for the simplified format, minimal number of tokens is nine
         #  1 | measure
         # +1 |     key:fifths:0
