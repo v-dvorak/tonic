@@ -110,4 +110,4 @@ def linearize_note_events_to_lmx(measure_groups: list[list[VirtualNode]]) -> LMX
         return LMXWrapper(sequence)
     else:
         print("Warning: No note events were written.")
-        return LMXWrapper(sequence)
+        return LMXWrapper([])
