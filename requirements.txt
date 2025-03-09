@@ -1,0 +1,10 @@
+mung==1.2.1
+nltk==3.9.1
+numpy~=2.1.1
+opencv_contrib_python==4.11.0.86
+opencv_python==4.10.0.84
+Pillow==11.1.0
+Requests==2.32.3
+smashcima==0.2.0
+tqdm==4.66.1
+stalix @ https://github.com/v-dvorak/stalix
