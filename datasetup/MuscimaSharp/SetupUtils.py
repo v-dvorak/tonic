@@ -6,14 +6,11 @@ from PIL import Image
 from PIL import ImageFile
 from tqdm import tqdm
 
+from . import MUSCIMA_IMAGES_DIR, MUSCIMA_ANNOTATIONS_DIR, MUSCIMA_SHARP_ENTRY_POINT
 from .Download import BACKGROUNDS_DIR
 
-# entry points for annotation and image retrieval
-MUSCIMA_IMAGES_DIR = Path("datasets/cvcmuscima/CvcMuscima-Distortions")
-MUSCIMA_ANNOTATIONS_DIR = Path("datasets/muscimapp/v1.0/data/cropobjects_withstaff")
-
 # output paths
-OUTPUT_DIR = Path("datasets/muscima-sharp")
+OUTPUT_DIR = MUSCIMA_SHARP_ENTRY_POINT
 OUTPUT_DIR.mkdir(exist_ok=True, parents=True)
 (OUTPUT_DIR / "images").mkdir(exist_ok=True, parents=True)
 (OUTPUT_DIR / "labels").mkdir(exist_ok=True, parents=True)

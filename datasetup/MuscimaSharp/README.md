@@ -15,7 +15,7 @@ pip install -r requirements.txt
 And run the build script from the `tonic` directory:
 
 ```
-python3 -m tonic.datasetup.MuscimaSharp
+python3 -m datasetup.MuscimaSharp
 ```
 
 All the data necessary will be automatically downloaded.

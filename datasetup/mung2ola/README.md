@@ -15,7 +15,7 @@ pip install -r requirements.txt
 And run the build script from the `tonic` directory:
 
 ```
-python3 -m tonic.datasetup.mung2ola "output_dir" "image_dir" "annot_dir"
+python3 -m datasetup.mung2ola "output_dir" "image_dir" "annot_dir"
 ```
 
 For implementation details see [Algorithm Description](docs/algorithm-description.md).
