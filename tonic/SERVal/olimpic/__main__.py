@@ -6,7 +6,7 @@ from timeit import default_timer as timer
 from prettytable import PrettyTable, MARKDOWN
 from tqdm import tqdm
 
-from datasetup.olimpic import OLIMPIC_ENTRY_POINT
+from datasetup.olimpic import OLIMPIC_ENTRY_POINT, download_olimpic
 from odtools.Download import (get_path_to_latest_version, update_models, OLA_TAG, NOTA_TAG)
 from odtools.Inference.ModelWrappers import YOLODetectionModelWrapper
 from .pipeline import process_single_olimpic_image
@@ -28,6 +28,10 @@ def main():
     update_models()
     notehead_detector = YOLODetectionModelWrapper(get_path_to_latest_version(NOTA_TAG))
     staff_detector = YOLODetectionModelWrapper(get_path_to_latest_version(OLA_TAG))
+
+    # setup dataset
+    if not OLIMPIC_ENTRY_POINT.exists():
+        download_olimpic()
 
     # load images
     images = sorted(list(OLIMPIC_ENTRY_POINT.rglob("*.png")))
