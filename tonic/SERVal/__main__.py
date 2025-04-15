@@ -3,14 +3,16 @@ from pathlib import Path
 
 from prettytable import PrettyTable, MARKDOWN
 
-from ..Linearization import LMXWrapper, complex_musicxml_file_to_lmx
+from .utils import compute_LMX_metrics
+from ..Linearization import LMXWrapper
 
 
 def main():
     parser = ArgumentParser()
 
-    parser.add_argument("predicted", type=Path, help="Predicted file or directory")
-    parser.add_argument("ground_truth", type=Path, help="Ground truth file or directory")
+    parser.add_argument("predicted", type=Path, help="Predicted MusicXML file or directory")
+    parser.add_argument("ground_truth", type=Path, help="Ground truth MusicXML file or directory")
+    parser.add_argument("-o", "--output", type=Path, default=None, help="Store detailed results to a CSV file")
 
     args = parser.parse_args()
 
@@ -27,7 +29,7 @@ def main():
         raise ValueError("Number of predicted and ground truth files must match")
 
     # SETUP TABLE
-    table = PrettyTable(["ID", "SER"])
+    table = PrettyTable(["ID", "standardized", "reduced", "melody", "contour"])
     table.set_style(MARKDOWN)
     table.align = "r"
 
@@ -36,14 +38,26 @@ def main():
         print(f"vs predicted: {pr.name}")
         try:
             p_lmx = LMXWrapper.from_musicxml_file(pr)
-            gt_lmx = complex_musicxml_file_to_lmx(gt)
-            ser = LMXWrapper.normalized_levenstein_distance(p_lmx, gt_lmx)
-            print(ser)
-            table.add_row([i, f"{ser:.4f}"])
+            gt_lmx = LMXWrapper.from_complex_musicxml_file(gt)
+
+            stand, red, mel, cont = compute_LMX_metrics(p_lmx, gt_lmx)
+
+            table.add_row([
+                i,
+                f"{stand:.4f}",
+                f"{red:.4f}",
+                f"{mel:.4f}",
+                f"{cont:.4f}",
+            ])
         except Exception as e:
-            table.add_row([i, "err"])
+            table.add_row([i, "err", "err", "err", "err"])
             print(e)
         print()
+
+    if args.output:
+        args.output.mkdir(exist_ok=True, parents=True)
+        with open(args.output) as file:
+            file.write(table.to_csv(index=False))
 
     print(table)
 

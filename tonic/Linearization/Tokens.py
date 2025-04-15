@@ -1,10 +1,13 @@
 from lmx.linearization.vocabulary import PITCH_TOKENS
+from odtools.Conversions.Formats import ExtendedEnum
+
+PITCH_ENUM: ExtendedEnum = ExtendedEnum("PITCH_ENUM", {pitch: i for i, pitch in enumerate(PITCH_TOKENS)})
 
 CLEF_G2_TOKEN = "clef:G2"
 
-# big tokens should be split to smaller ones if used for comparison
-BASE_TIME_BEAT_LARGE_TOKEN = "time beats:4 beat-type:4"
-GS_CLEF_LARGE_TOKEN = "clef:G2 staff:1 clef:F4 staff:2"
+# large tokens should be split to smaller ones if used for comparison
+BASE_TIME_BEAT_LT = "time beats:4 beat-type:4"
+GS_CLEF_LARGE_LT = "clef:G2 staff:1 clef:F4 staff:2"
 
 DEFAULT_KEY_TOKEN = "key:fifths:0"
 
