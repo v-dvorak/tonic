@@ -8,5 +8,5 @@ Pillow==11.2.1
 prettytable==3.16.0
 Requests==2.32.3
 smashcima==1.1.2
-stalix @ https://github.com/v-dvorak/stalix
+stalix @ git+https://github.com/v-dvorak/stalix
 tqdm==4.66.5
