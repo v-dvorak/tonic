@@ -13,6 +13,7 @@ def main():
     parser.add_argument("predicted", type=Path, help="Predicted MusicXML file or directory")
     parser.add_argument("ground_truth", type=Path, help="Ground truth MusicXML file or directory")
     parser.add_argument("-o", "--output", type=Path, default=None, help="Store detailed results to a CSV file")
+    parser.add_argument("--raise_err", action="store_true", help="Raise exception if errors occur")
 
     args = parser.parse_args()
 
@@ -34,7 +35,7 @@ def main():
     table.align = "r"
 
     for i, (pr, gt) in enumerate(zip(predicted, ground_truth)):
-        print(f"Validating ground truth: {gt.name}")
+        print(f"{i}) Validating ground truth: {gt.name}")
         print(f"vs predicted: {pr.name}")
         try:
             p_lmx = LMXWrapper.from_musicxml_file(pr)
@@ -50,6 +51,9 @@ def main():
                 f"{cont:.4f}",
             ])
         except Exception as e:
+            if args.raise_err:
+                raise e
+
             table.add_row([i, "err", "err", "err", "err"])
             print(e)
         print()

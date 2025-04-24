@@ -8,7 +8,7 @@ from lmx.linearization.Linearizer import Linearizer
 from lmx.symbolic.MxlFile import MxlFile
 from lmx.symbolic.part_to_score import part_to_score
 from nltk.metrics import edit_distance
-from smashcima import Clef, Event, Note, Score, StaffSemantic
+from smashcima import Clef, Event, Note, Score, StaffSemantic, Measure
 
 from .Tokens import G_CLEF_ZERO_PITCH_INDEX, F_CLEF_ZERO_PITCH_INDEX
 from .Tokens import (NOTE_QUARTER_TOKEN, CHORD_TOKEN, GS_CLEF_LARGE_LT,
@@ -187,11 +187,11 @@ class LMXWrapper:
                     # reset chord
                     if first:
                         chord.append(PITCH_ENUM.from_string(token, lower=False, from_name=True))
-                    if len(chord) > 0:
+                        first = False
+                    elif len(chord) > 0:
                         output.append(chord)
                     chord = [PITCH_ENUM.from_string(token, lower=False, from_name=True)]
                 in_chord = False
-            first = False
 
         # append possible leftovers
         if len(chord) > 0:
@@ -397,6 +397,36 @@ class _MXMLSimplifier:
         return sequence
 
     @staticmethod
+    def _sort_score_to_measures_based_on_system_breaks(score: Score) -> list[Measure]:
+        """
+        Splits score parts based on system breaks and puts them together into a list
+        as if they were read on the physical page from left to right, top to bottom.
+        """
+        # Smashcima indexes from 0, "new system" measure is at the start of a new system
+        # create a list of page breaks for each part -> output line by line
+        assert len(score.new_system_measure_indices) > 0
+
+        system_breaks = sorted(list(score.new_system_measure_indices))
+        measures_ordered = []
+
+        # retrieve measures from first system
+        for part in score.parts:
+            measures_ordered += part.measures[:system_breaks[0]]
+
+        # retrieve middle parts
+        for index in range(1, len(system_breaks)):
+            start = system_breaks[index - 1]
+            end = system_breaks[index]
+            for part in score.parts:
+                measures_ordered += part.measures[start:end]
+
+        # TODO: investigate breaks at the end of the score
+        # retrieve ends
+        for part in score.parts:
+            measures_ordered += part.measures[system_breaks[-1]:]
+
+        return measures_ordered
+    @staticmethod
     def smashcima_score_to_lmx(score: Score) -> LMXWrapper:
         """
         Takes Smashcima Score and turns it into LMX Event by Event.
@@ -404,6 +434,7 @@ class _MXMLSimplifier:
         :param score: Smashcima Score
         :return: LMX
         """
+        # assert system_breaks is None or len(score.parts) == len(system_breaks)
         sequence: list[str] = []
 
         sequence.append(MEASURE_TOKEN)
@@ -411,8 +442,22 @@ class _MXMLSimplifier:
         sequence.extend(BASE_TIME_BEAT_LT.split())
         sequence.extend(GS_CLEF_LARGE_LT.split())
         first = True
-        for part in score.parts:
-            for measure in part.measures:
+
+        # score that have only one part (one instrument) or that do not contain any page breaks
+        if len(score.parts) == 0 or len(score.new_system_measure_indices) == 0:
+            for part in score.parts:
+                for measure in part.measures:
+                    measure.sort_staves_by_number()
+                    if not first:
+                        sequence.append(MEASURE_TOKEN)
+                    first = False
+                    for event in measure.events:
+                        sequence.extend(_MXMLSimplifier._event_to_lmx(event))
+        # more complex scores with multiple instruments playing at the same time
+        else:
+            measures_ordered = _MXMLSimplifier._sort_score_to_measures_based_on_system_breaks(score)
+            for measure in measures_ordered:
+                measure.sort_staves_by_number()
                 if not first:
                     sequence.append(MEASURE_TOKEN)
                 first = False
