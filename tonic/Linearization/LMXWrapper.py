@@ -426,6 +426,7 @@ class _MXMLSimplifier:
             measures_ordered += part.measures[system_breaks[-1]:]
 
         return measures_ordered
+
     @staticmethod
     def smashcima_score_to_lmx(score: Score) -> LMXWrapper:
         """
