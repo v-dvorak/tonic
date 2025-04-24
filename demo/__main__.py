@@ -4,11 +4,12 @@ from timeit import default_timer as timer
 
 import cv2
 from PIL import Image
+from tqdm import tqdm
+
 from odtools.Download import (get_path_to_latest_version, update_models, OLA_TAG, NOTA_TAG, update_demo_images,
                               load_demo_images)
 from odtools.Inference import InferenceJob, SplitSettings, run_multiple_prediction_jobs
 from odtools.Inference.ModelWrappers import YOLODetectionModelWrapper
-
 from tonic import NOTEHEAD_TYPE_TAG, NoteheadType, NodeName, Node
 from tonic import (linearize_note_events_to_lmx, preprocess_annots_for_reconstruction, reconstruct_note_events,
                    refactor_measures_on_page)
@@ -29,6 +30,8 @@ parser.add_argument("-o", "--output_dir", type=str, help="Path to output directo
 parser.add_argument("-v", "--verbose", action="store_true", help="Make script verbose")
 parser.add_argument("--visualize", type=int, default=0, help="Visualize inference and assembly steps")
 parser.add_argument("--update", action="store_true", help="Update models and demo images")
+parser.add_argument("--notehead_detector", type=Path, help="Path to notehead detector")
+parser.add_argument("--layout_detector", type=Path, help="Path to layout detector")
 
 args = parser.parse_args()
 
@@ -36,8 +39,15 @@ args = parser.parse_args()
 if args.update:
     update_models()
 
-notehead_detector = YOLODetectionModelWrapper(get_path_to_latest_version(NOTA_TAG))
-staff_detector = YOLODetectionModelWrapper(get_path_to_latest_version(OLA_TAG))
+if args.notehead_detector:
+    notehead_detector = YOLODetectionModelWrapper(args.notehead_detector)
+else:
+    notehead_detector = YOLODetectionModelWrapper(get_path_to_latest_version(NOTA_TAG))
+
+if args.layout_detector:
+    layout_detector = YOLODetectionModelWrapper(args.layout_detector)
+else:
+    staff_detector = YOLODetectionModelWrapper(get_path_to_latest_version(OLA_TAG))
 
 if args.output_dir:
     args.output_dir = Path(args.output_dir)
@@ -59,15 +69,15 @@ time_spent_inference = 0
 time_spent_reconstruction = 0
 time_spent_measure_refactoring = 0
 
-for image_path in images_to_process:
+for image_path in tqdm(images_to_process, disable=args.verbose, desc="Running inference"):
     if args.verbose:
         print(f">>> {image_path}")
 
     # SETUP INFERENCE JOBS
     # convert image to bw beforehand
     # (color to bw conversion from cv2 does not work in this case)
-    image = Image.open(image_path)
-    bw_image = image.convert("L")
+    loaded_image = Image.open(image_path)
+    bw_image = loaded_image.convert("L")
 
     # staff
     staff_job = InferenceJob(
@@ -79,7 +89,7 @@ for image_path in images_to_process:
 
     # noteheads
     notehead_job = InferenceJob(
-        image=cv2.imread(str(image_path)),
+        image=cv2.imread(image_path),
         model_wrapper=notehead_detector,
         # retrieve only full and empty noteheads
         wanted_ids=[0, 1],
@@ -147,9 +157,6 @@ for image_path in images_to_process:
 
     start = timer()
 
-    if len(measures) == 0:
-        print("Warning: No measures were found")
-
     if args.visualize >= VIZ_LEVEL_REFACTORED:
         visualize_input_data(
             image_path,
@@ -157,6 +164,9 @@ for image_path in images_to_process:
             notehead_full=noteheads,
             notehead_half=[]
         )
+
+    if len(measures) == 0:
+        print("Warning: No measures were found")
 
     # RECONSTRUCT PAGE
     events = reconstruct_note_events(
@@ -174,7 +184,6 @@ for image_path in images_to_process:
     if args.output_dir:
         with open(args.output_dir / (image_path.stem + ".musicxml"), "w", encoding="utf8") as f:
             predicted_lmx = linearize_note_events_to_lmx(events)
-            print(predicted_lmx)
             f.write(predicted_lmx.to_musicxml())
 
     if args.visualize >= VIZ_LEVEL_OUTPUT:
