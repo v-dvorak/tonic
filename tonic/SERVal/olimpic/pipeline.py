@@ -162,9 +162,9 @@ def process_single_olimpic_image(
         image_path: Path,
         staff_detector: IModelWrapper,
         notehead_detector: IModelWrapper,
-        vertical_offset_factor: float = 0.2,
+        vertical_offset_factor: float = None,
         verbose: bool = False,
-        visualize: bool = False,
+        visualize: bool = False
 ) -> LMXWrapper:
     """
     Predicts noteheads, staff and grand staff for a single image from the OLiMPiC dataset.
@@ -172,10 +172,14 @@ def process_single_olimpic_image(
     :param image_path: Path to an image
     :param staff_detector: wrapped model for staff and grand staff detection
     :param notehead_detector: wrapped model for notehead detection
-    :param vertical_offset_factor: how much to offset safe zone from image edges relative to image height
+    :param vertical_offset_factor: how much to offset safe zone from image edges relative to image height,
+    defaults to 0.2
     :param verbose: make script verbose
     :param visualize: visualize inference
     """
+    if vertical_offset_factor is None:
+        vertical_offset_factor = 0.2
+
     measures, grand_staffs, noteheads = run_predictions_single_image(
         image_path,
         staff_detector,

@@ -21,6 +21,7 @@ def main():
     parser.add_argument("-v", "--verbose", action="store_true", help="Make script verbose")
     parser.add_argument("-o", "--output", type=Path, default=None, help="Store detailed results to a CSV file")
     parser.add_argument("--raise_err", action="store_true", help="Raise exception if errors occur")
+    parser.add_argument("--safe_box_off", action="store_true", help="Turns of the safe box in assembly algorithm")
 
     args = parser.parse_args()
 
@@ -68,6 +69,7 @@ def main():
                 image_path,
                 staff_detector,
                 notehead_detector,
+                vertical_offset_factor=0 if args.safe_box_off else None,
                 verbose=False,
                 visualize=False
             )
