@@ -45,7 +45,7 @@ def main():
         print("Warning: Number of data specified is greater than the number of data available")
         args.count = len(mxlms)
 
-    # retrieve specified count of images
+    # retrieve specified number of images
     data = list(zip(images, mxlms))
     random.Random(args.seed).shuffle(data)
     data = data[:args.count]
